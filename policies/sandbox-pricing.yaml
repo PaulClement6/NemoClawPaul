@@ -1,0 +1,31 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Pricing Agent
+# Lot 2 — Pricing agent. Proprietary model access only.
+# =============================================================================
+# This policy will be activated when the Lot 2 pricing model is deployed.
+# The agent can only POST scoring requests to the pricing model endpoint.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
+
+  - name: pricing-model
+    endpoint: pricing.meridian-demo.internal
+    protocol: https
+    access: restricted
+    binaries:
+      - openclaw
+    rules:
+      - allow: POST
+        paths:
+          - /api/v1/pricing/score
+        description: "Submit scoring requests to the pricing model"

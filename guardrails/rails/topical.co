@@ -1,0 +1,37 @@
+# =============================================================================
+# Lot 3: Insurance Topic Constraints Rail
+# Ensures conversations remain within the scope of insurance-related topics.
+# Politely redirects off-topic requests.
+# =============================================================================
+
+define user ask insurance
+  "What does my policy cover?"
+  "How do I file a claim?"
+  "What is my premium?"
+  "Can you explain my deductible?"
+  "What is the status of my claim?"
+  "How do I renew my policy?"
+  "What types of coverage do you offer?"
+  "Is flood damage covered?"
+
+define user ask off topic
+  "What is the weather today?"
+  "Tell me a joke"
+  "Write me a poem"
+  "What stocks should I buy?"
+  "Help me with my homework"
+  "Who will win the election?"
+  "What is the meaning of life?"
+  "Can you write code for me?"
+  "Give me medical advice"
+  "What restaurant should I go to?"
+
+define bot redirect to insurance
+  "I appreciate your question, but I'm specifically designed to help with insurance-related inquiries for Meridian Insurance. I can help you with policy details, claims, billing, coverage questions, and more. What insurance topic can I assist you with?"
+
+define bot respond to insurance
+  "I'd be happy to help with that insurance question."
+
+define flow topical check
+  user ask off topic
+  bot redirect to insurance

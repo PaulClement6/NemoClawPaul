@@ -1,0 +1,32 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Billing Specialist Agent
+# =============================================================================
+# Access to inference API plus the internal billing service.
+# Billing endpoint is restricted to GET requests and specific paths.
+# Only the openclaw binary may access the billing endpoint.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
+
+  - name: billing-service
+    endpoint: billing.meridian-demo.internal
+    protocol: https
+    access: restricted
+    binaries:
+      - openclaw
+    rules:
+      - allow: GET
+        paths:
+          - /api/v1/billing/*
+          - /api/v1/premium/*
+        description: "Read-only access to billing and premium data"

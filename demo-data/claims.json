@@ -1,0 +1,6 @@
+[
+  { "claim_id": "CLM-2024-0445", "customer_id": "CUST-002", "type": "Motor - Windscreen", "date_filed": "2024-12-10", "amount_claimed": 420.00, "amount_settled": 350.00, "status": "settled", "description": "Windscreen crack from road debris on M62" },
+  { "claim_id": "CLM-2025-0012", "customer_id": "CUST-001", "type": "Home - Water Damage", "date_filed": "2025-01-18", "amount_claimed": 2800.00, "amount_settled": null, "status": "under_review", "description": "Burst pipe in bathroom causing water damage to ground floor ceiling" },
+  { "claim_id": "CLM-2025-0034", "customer_id": "CUST-004", "type": "Commercial - Theft", "date_filed": "2025-02-05", "amount_claimed": 8500.00, "amount_settled": null, "status": "investigation", "description": "Break-in at premises. Stolen: 3x laptops, networking equipment, petty cash" },
+  { "claim_id": "CLM-2025-0051", "customer_id": "CUST-005", "type": "Home - Accidental Damage", "date_filed": "2025-02-12", "amount_claimed": 650.00, "amount_settled": null, "status": "pending_documents", "description": "Accidental damage to kitchen worktop. Awaiting repair quote." }
+]

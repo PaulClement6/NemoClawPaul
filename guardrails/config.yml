@@ -1,0 +1,41 @@
+# =============================================================================
+# NeMo Guardrails Configuration
+# Lot 3: Safety rails for the Meridian Insurance demo
+# =============================================================================
+
+# Models section: Configure the LLM backend.
+# Points to NVIDIA NIM for inference, consistent with the NemoClaw sandbox
+# policies that allow access to integrate.api.nvidia.com.
+models:
+  - type: main
+    engine: nvidia_ai_endpoints
+    model: meta/llama-3.1-70b-instruct
+    parameters:
+      temperature: 0.2
+      max_tokens: 1024
+
+# Rails section: Define input and output safety rails.
+# Input rails run BEFORE the LLM processes the user message.
+# Output rails run AFTER the LLM generates a response, before delivery.
+rails:
+  input:
+    flows:
+      # Detect and block prompt injection / jailbreak attempts
+      - jailbreak detection
+
+      # Detect and redact PII in user messages before they reach the LLM
+      - pii detection
+
+      # Ensure the conversation stays within insurance-related topics
+      - topical check
+
+  output:
+    flows:
+      # Redact any PII that may appear in generated responses
+      - pii redaction
+
+      # Verify the response stays on-topic for insurance
+      - topical check
+
+# Colang files are loaded from the rails/ subdirectory.
+# Custom Python actions are loaded from the actions/ subdirectory.

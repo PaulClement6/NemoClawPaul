@@ -1,0 +1,28 @@
+# =============================================================================
+# Lot 3: PII Detection and Redaction Rail
+# Detects personally identifiable information and redacts it before
+# processing or returning responses.
+# =============================================================================
+
+define user provide pii
+  "My social security number is ..."
+  "My SSN is ..."
+  "My credit card number is ..."
+  "My date of birth is ..."
+  "I live at 123 Main Street ..."
+  "My email is user@example.com"
+  "My phone number is ..."
+  "My driver's license is ..."
+
+define bot acknowledge pii redaction
+  "I've noted the information you provided. For your security, I've redacted any sensitive personal details from our conversation. How can I help you further?"
+
+define flow pii detection
+  user provide pii
+  $redacted = execute pii_redactor(text=$user_message)
+  bot acknowledge pii redaction
+
+define flow pii redaction
+  # Output rail: redact PII from bot responses before delivery
+  bot ...
+  $redacted_response = execute pii_redactor(text=$bot_message)

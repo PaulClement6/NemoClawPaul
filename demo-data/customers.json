@@ -1,0 +1,72 @@
+[
+  {
+    "customer_id": "CUST-001",
+    "name": "Sarah Mitchell",
+    "email": "s.mitchell@example.com",
+    "phone": "+44 7700 900123",
+    "policy_number": "POL-2024-7812",
+    "product_type": "Home & Contents",
+    "policy_start": "2024-03-15",
+    "policy_end": "2025-03-14",
+    "renewal_date": "2025-03-15",
+    "premium_monthly": 89.50,
+    "risk_tier": "standard",
+    "address": "14 Elm Grove, Bristol, BS7 8AA"
+  },
+  {
+    "customer_id": "CUST-002",
+    "name": "James Thornton",
+    "email": "j.thornton@example.com",
+    "phone": "+44 7700 900456",
+    "policy_number": "POL-2024-3345",
+    "product_type": "Motor",
+    "policy_start": "2024-06-01",
+    "policy_end": "2025-05-31",
+    "renewal_date": "2025-06-01",
+    "premium_monthly": 142.00,
+    "risk_tier": "elevated",
+    "address": "27 Park Lane, Manchester, M14 5RQ"
+  },
+  {
+    "customer_id": "CUST-003",
+    "name": "Amara Osei",
+    "email": "a.osei@example.com",
+    "phone": "+44 7700 900789",
+    "policy_number": "POL-2023-9901",
+    "product_type": "Life & Critical Illness",
+    "policy_start": "2023-09-01",
+    "policy_end": "2033-08-31",
+    "renewal_date": "2033-09-01",
+    "premium_monthly": 67.25,
+    "risk_tier": "preferred",
+    "address": "8 Victoria Road, London, SE15 3TH"
+  },
+  {
+    "customer_id": "CUST-004",
+    "name": "David Chen",
+    "email": "d.chen@example.com",
+    "phone": "+44 7700 900321",
+    "policy_number": "POL-2024-5567",
+    "product_type": "Commercial Property",
+    "policy_start": "2024-01-01",
+    "policy_end": "2024-12-31",
+    "renewal_date": "2025-01-01",
+    "premium_monthly": 340.00,
+    "risk_tier": "standard",
+    "address": "Unit 4, Crown Business Park, Leeds, LS10 1PX"
+  },
+  {
+    "customer_id": "CUST-005",
+    "name": "Elena Vasquez",
+    "email": "e.vasquez@example.com",
+    "phone": "+44 7700 900654",
+    "policy_number": "POL-2024-8823",
+    "product_type": "Home & Contents",
+    "policy_start": "2024-09-01",
+    "policy_end": "2025-08-31",
+    "renewal_date": "2025-09-01",
+    "premium_monthly": 112.75,
+    "risk_tier": "elevated",
+    "address": "3 Riverside Walk, Edinburgh, EH1 2NG"
+  }
+]

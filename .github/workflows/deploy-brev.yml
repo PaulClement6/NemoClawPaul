@@ -1,0 +1,50 @@
+# =============================================================================
+# Deploy to Brev GPU Instance
+# Currently set to `workflow_dispatch` (manual trigger) because the Brev
+# instance + BREV_SSH_KEY / BREV_HOST secrets are not yet configured.
+# Once the instance is live and the secrets are set, switch the trigger back
+# to `push: branches: [main]`.
+# =============================================================================
+
+name: Deploy to Brev
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.BREV_SSH_KEY }}" > ~/.ssh/brev_key
+          chmod 600 ~/.ssh/brev_key
+          ssh-keyscan -H ${{ secrets.BREV_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to Brev instance
+        run: |
+          ssh -i ~/.ssh/brev_key user@${{ secrets.BREV_HOST }} << 'DEPLOY'
+            cd ~/nemoclaw-demo
+
+            echo "Pulling latest changes..."
+            git pull origin main
+
+            echo "Installing production dependencies..."
+            npm ci --production
+
+            echo "Applying sandbox policies..."
+            for policy in policies/sandbox-*.yaml; do
+              echo "  Applying $policy"
+              npx nemoclaw policy apply "$policy"
+            done
+
+            echo "Deployment complete."
+          DEPLOY
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/brev_key

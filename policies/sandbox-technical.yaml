@@ -1,0 +1,44 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Technical Support Agent
+# =============================================================================
+# Access to inference API, claims service (read), and portal service (write).
+# This agent can look up claim details and submit portal actions.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
+
+  - name: claims-service
+    endpoint: claims.meridian-demo.internal
+    protocol: https
+    access: restricted
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: GET
+        paths:
+          - /api/v1/claims/*
+        description: "Read access to claims data"
+
+  - name: portal-service
+    endpoint: portal.meridian-demo.internal
+    protocol: https
+    access: restricted
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: POST
+        paths:
+          - /api/v1/portal/*
+        description: "Write access to portal actions"

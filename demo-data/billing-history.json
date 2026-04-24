@@ -1,0 +1,18 @@
+[
+  { "customer_id": "CUST-001", "date": "2025-02-01", "amount": 89.50, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-001", "date": "2025-01-01", "amount": 89.50, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-001", "date": "2024-12-01", "amount": 82.00, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-001", "date": "2024-11-01", "amount": 82.00, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-002", "date": "2025-02-01", "amount": 142.00, "type": "premium", "description": "Monthly premium - Motor", "status": "paid" },
+  { "customer_id": "CUST-002", "date": "2025-01-01", "amount": 142.00, "type": "premium", "description": "Monthly premium - Motor", "status": "paid" },
+  { "customer_id": "CUST-002", "date": "2024-12-01", "amount": 128.00, "type": "premium", "description": "Monthly premium - Motor", "status": "paid" },
+  { "customer_id": "CUST-002", "date": "2024-12-15", "amount": -350.00, "type": "claim_payout", "description": "Windscreen replacement claim CLM-2024-0445", "status": "settled" },
+  { "customer_id": "CUST-003", "date": "2025-02-01", "amount": 67.25, "type": "premium", "description": "Monthly premium - Life & Critical Illness", "status": "paid" },
+  { "customer_id": "CUST-003", "date": "2025-01-01", "amount": 67.25, "type": "premium", "description": "Monthly premium - Life & Critical Illness", "status": "paid" },
+  { "customer_id": "CUST-004", "date": "2025-02-01", "amount": 340.00, "type": "premium", "description": "Monthly premium - Commercial Property", "status": "paid" },
+  { "customer_id": "CUST-004", "date": "2025-01-01", "amount": 340.00, "type": "premium", "description": "Monthly premium - Commercial Property", "status": "paid" },
+  { "customer_id": "CUST-004", "date": "2024-12-01", "amount": 310.00, "type": "premium", "description": "Monthly premium - Commercial Property", "status": "paid" },
+  { "customer_id": "CUST-005", "date": "2025-02-01", "amount": 112.75, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-005", "date": "2025-01-01", "amount": 112.75, "type": "premium", "description": "Monthly premium - Home & Contents", "status": "paid" },
+  { "customer_id": "CUST-005", "date": "2025-01-20", "amount": 45.00, "type": "admin_fee", "description": "Policy amendment fee - added bicycle cover", "status": "paid" }
+]

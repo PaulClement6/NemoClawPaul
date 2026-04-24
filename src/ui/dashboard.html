@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian Insurance — AI Support Platform</title>
+<style>
+  :root {
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --navy-mid: #334155;
+    --slate: #64748b;
+    --slate-light: #94a3b8;
+    --ice: #e2e8f0;
+    --bg: #f8fafc;
+    --white: #ffffff;
+    --accent: #3b82f6;
+    --accent-light: #dbeafe;
+    --green: #22c55e;
+    --green-light: #dcfce7;
+    --orange: #f59e0b;
+    --orange-light: #fef3c7;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --purple: #8b5cf6;
+    --purple-light: #ede9fe;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--navy); height: 100vh; overflow: hidden; }
+
+  /* === LAYOUT === */
+  .app { display: grid; grid-template-columns: 280px 1fr 320px; grid-template-rows: 56px 1fr; height: 100vh; }
+
+  /* === TOP BAR === */
+  .topbar {
+    grid-column: 1 / -1;
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10;
+  }
+  .topbar-brand { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo {
+    width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: white; font-size: 16px;
+  }
+  .topbar-title { color: white; font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .topbar-subtitle { color: var(--slate-light); font-size: 11px; margin-top: 1px; }
+  .topbar-status { display: flex; align-items: center; gap: 8px; }
+  .topbar-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.08); padding: 6px 12px; border-radius: 20px;
+    font-size: 12px; color: var(--slate-light);
+  }
+  .topbar-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .topbar-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .topbar-dot.orange { background: var(--orange); }
+
+  /* === LEFT PANEL: AGENTS === */
+  .agents-panel {
+    background: var(--white);
+    border-right: 1px solid var(--ice);
+    overflow-y: auto;
+    padding: 16px;
+  }
+  .panel-header {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--slate); margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  /* Agent cards */
+  .agent-card {
+    background: var(--bg);
+    border: 1.5px solid var(--ice);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .agent-card:hover { border-color: var(--slate-light); }
+  .agent-card.active {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+  }
+  .agent-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .agent-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: white; flex-shrink: 0;
+  }
+  .agent-avatar.triage { background: var(--accent); }
+  .agent-avatar.billing { background: var(--green); }
+  .agent-avatar.compliance { background: var(--orange); }
+  .agent-avatar.technical { background: var(--purple); }
+  .agent-name { font-size: 13px; font-weight: 600; }
+  .agent-role { font-size: 11px; color: var(--slate); margin-top: 1px; }
+  .agent-tools {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
+  }
+  .agent-tool-tag {
+    font-size: 10px; background: var(--white); border: 1px solid var(--ice);
+    padding: 2px 8px; border-radius: 10px; color: var(--slate);
+    font-family: var(--mono);
+  }
+  .agent-card.active .agent-tool-tag {
+    background: white; border-color: rgba(59,130,246,0.2);
+  }
+  .agent-status-indicator {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; font-weight: 600; padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .agent-status-indicator.active {
+    background: var(--green-light); color: #16a34a;
+  }
+  .agent-status-indicator.idle {
+    background: var(--ice); color: var(--slate);
+  }
+
+  /* Escalation flow */
+  .escalation-flow {
+    margin-top: 16px; padding: 12px; background: var(--bg);
+    border: 1px solid var(--ice); border-radius: var(--radius);
+  }
+  .flow-title { font-size: 11px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .flow-step {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; font-size: 12px; color: var(--slate);
+  }
+  .flow-step.current { color: var(--accent); font-weight: 600; }
+  .flow-dot { width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--ice); flex-shrink: 0; }
+  .flow-step.current .flow-dot { background: var(--accent); border-color: var(--accent); }
+  .flow-step.done .flow-dot { background: var(--green); border-color: var(--green); }
+  .flow-line { width: 2px; height: 12px; background: var(--ice); margin-left: 3px; }
+
+  /* === CENTER: CHAT === */
+  .chat-panel { display: flex; flex-direction: column; background: var(--bg); }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  /* Message bubbles */
+  .message { display: flex; gap: 10px; max-width: 85%; animation: fadeIn 0.3s ease; }
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .message-avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0; color: white;
+  }
+  .message.user .message-avatar { background: var(--navy-mid); }
+  .message-body { display: flex; flex-direction: column; gap: 4px; }
+  .message-sender { font-size: 11px; font-weight: 600; color: var(--slate); }
+  .message.user .message-sender { text-align: right; }
+  .message-content {
+    padding: 12px 16px; border-radius: var(--radius);
+    font-size: 14px; line-height: 1.5;
+    box-shadow: var(--shadow);
+  }
+  .message.assistant .message-content { background: var(--white); color: var(--navy); }
+  .message.user .message-content { background: var(--accent); color: white; }
+
+  /* Action cards (tool calls, escalations) */
+  .action-card {
+    background: var(--white);
+    border: 1px solid var(--ice);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin: 4px 0;
+    box-shadow: var(--shadow);
+    animation: fadeIn 0.3s ease;
+  }
+  .action-card-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .action-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+  .action-icon.tool { background: var(--purple-light); color: var(--purple); }
+  .action-icon.escalation { background: var(--orange-light); color: var(--orange); }
+  .action-icon.security { background: var(--red-light); color: var(--red); }
+  .action-icon.policy { background: var(--green-light); color: #16a34a; }
+  .action-label { font-size: 12px; font-weight: 600; }
+  .action-detail {
+    font-size: 12px; color: var(--slate); font-family: var(--mono);
+    background: var(--bg); padding: 8px 10px; border-radius: 6px; margin-top: 4px;
+    word-break: break-all;
+  }
+  .action-result {
+    font-size: 12px; margin-top: 6px; padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .action-result.success { background: var(--green-light); color: #16a34a; }
+  .action-result.blocked { background: var(--red-light); color: var(--red); }
+  .action-result.dryrun { background: var(--orange-light); color: var(--orange); }
+  .action-result.error { background: var(--red-light); color: var(--red); }
+  .action-tool-result {
+    font-size: 11px; color: var(--slate); background: var(--bg);
+    padding: 6px 10px; border-radius: 6px; margin-top: 4px;
+    font-family: var(--mono); max-height: 120px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .topbar-dot.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  /* Hide log entries when a category filter is active */
+  .log-entry.filtered-out { display: none; }
+
+  /* System messages */
+  .system-message {
+    align-self: center; text-align: center;
+    padding: 8px 16px; background: var(--white);
+    border: 1px dashed var(--ice); border-radius: 20px;
+    font-size: 12px; color: var(--slate);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Chat input */
+  .chat-input-area {
+    padding: 16px 20px;
+    background: var(--white);
+    border-top: 1px solid var(--ice);
+  }
+  .chat-input-wrapper {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1.5px solid var(--ice);
+    border-radius: var(--radius); padding: 4px 4px 4px 16px;
+    transition: border-color 0.2s;
+  }
+  .chat-input-wrapper:focus-within { border-color: var(--accent); }
+  .chat-input {
+    flex: 1; border: none; background: transparent; outline: none;
+    font-size: 14px; font-family: var(--font); color: var(--navy);
+    padding: 8px 0;
+  }
+  .chat-input::placeholder { color: var(--slate-light); }
+  .chat-send {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--accent); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; transition: background 0.2s;
+  }
+  .chat-send:hover { background: #2563eb; }
+  .chat-send:disabled { background: var(--ice); cursor: default; }
+
+  /* === RIGHT PANEL: LOGS === */
+  .logs-panel {
+    background: var(--navy);
+    border-left: 1px solid var(--navy-mid);
+    display: flex; flex-direction: column;
+  }
+  .logs-header {
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--navy-mid);
+  }
+  .logs-title { font-size: 11px; font-weight: 700; color: var(--slate-light); text-transform: uppercase; letter-spacing: 1px; }
+  .logs-tabs { display: flex; gap: 4px; }
+  .logs-tab {
+    font-size: 11px; padding: 4px 10px; border-radius: 6px;
+    border: none; cursor: pointer; font-family: var(--font);
+    background: transparent; color: var(--slate);
+    transition: all 0.2s;
+  }
+  .logs-tab.active { background: var(--navy-mid); color: var(--slate-light); }
+  .logs-content {
+    flex: 1; overflow-y: auto; padding: 12px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.6;
+  }
+  .log-entry { padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; }
+  .log-entry:hover { background: rgba(255,255,255,0.03); }
+  .log-time { color: var(--slate); }
+  .log-level-info { color: var(--accent); }
+  .log-level-tool { color: var(--purple); font-weight: 500; }
+  .log-level-security { color: var(--red); font-weight: 500; }
+  .log-level-escalation { color: var(--orange); font-weight: 500; }
+  .log-level-policy { color: var(--green); font-weight: 500; }
+  .log-message { color: var(--ice); }
+  .log-detail { color: var(--slate-light); padding-left: 16px; }
+
+  /* Sandbox status */
+  .sandbox-status {
+    padding: 12px 16px;
+    border-top: 1px solid var(--navy-mid);
+    background: rgba(0,0,0,0.15);
+  }
+  .sandbox-label { font-size: 10px; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .sandbox-policy {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--ice); font-family: var(--mono);
+    padding: 4px 0;
+  }
+  .sandbox-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .sandbox-dot.allowed { background: var(--green); }
+  .sandbox-dot.denied { background: var(--red); }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex; align-items: center; gap: 4px;
+    padding: 12px 16px;
+  }
+  .typing-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--slate-light);
+    animation: typingBounce 1.4s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--ice); border-radius: 3px; }
+  .logs-content::-webkit-scrollbar-thumb { background: var(--navy-mid); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">M</div>
+      <div>
+        <div class="topbar-title">Meridian Insurance Group</div>
+        <div class="topbar-subtitle">AI Support Platform — NemoClaw Secured</div>
+      </div>
+    </div>
+    <div class="topbar-status">
+      <div class="topbar-badge" id="connBadge" title="Backend connectivity">
+        <div class="topbar-dot orange" id="connDot"></div>
+        <span id="connText">Connecting…</span>
+      </div>
+      <div class="topbar-badge">
+        <div class="topbar-dot green"></div>
+        NemoClaw Sandbox Active
+      </div>
+      <div class="topbar-badge">
+        <div class="topbar-dot orange"></div>
+        Lot 1 — Orchestration
+      </div>
+    </div>
+  </header>
+
+  <!-- LEFT: AGENT PANEL -->
+  <aside class="agents-panel" id="agentsPanel">
+    <div class="panel-header">Active Agents</div>
+
+    <div class="agent-card active" id="agent-triage">
+      <div class="agent-status-indicator active">Active</div>
+      <div class="agent-card-header">
+        <div class="agent-avatar triage">&#x1F3AF;</div>
+        <div>
+          <div class="agent-name">Triage Agent</div>
+          <div class="agent-role">Front-line routing &amp; FAQ</div>
+        </div>
+      </div>
+      <div class="agent-tools">
+        <span class="agent-tool-tag">knowledge_base</span>
+        <span class="agent-tool-tag">escalate</span>
+        <span class="agent-tool-tag">profile</span>
+      </div>
+    </div>
+
+    <div class="agent-card" id="agent-billing">
+      <div class="agent-status-indicator idle">Standby</div>
+      <div class="agent-card-header">
+        <div class="agent-avatar billing">&#x1F4B3;</div>
+        <div>
+          <div class="agent-name">Billing Specialist</div>
+          <div class="agent-role">Payments &amp; premiums</div>
+        </div>
+      </div>
+      <div class="agent-tools">
+        <span class="agent-tool-tag">billing_history</span>
+        <span class="agent-tool-tag">premium</span>
+        <span class="agent-tool-tag">refund</span>
+      </div>
+    </div>
+
+    <div class="agent-card" id="agent-compliance">
+      <div class="agent-status-indicator idle">Standby</div>
+      <div class="agent-card-header">
+        <div class="agent-avatar compliance">&#x1F4DC;</div>
+        <div>
+          <div class="agent-name">Compliance</div>
+          <div class="agent-role">Regulatory &amp; data privacy</div>
+        </div>
+      </div>
+      <div class="agent-tools">
+        <span class="agent-tool-tag">compliance_docs</span>
+        <span class="agent-tool-tag">data_policy</span>
+        <span class="agent-tool-tag">legal</span>
+      </div>
+    </div>
+
+    <div class="agent-card" id="agent-technical">
+      <div class="agent-status-indicator idle">Standby</div>
+      <div class="agent-card-header">
+        <div class="agent-avatar technical">&#x1F527;</div>
+        <div>
+          <div class="agent-name">Technical Support</div>
+          <div class="agent-role">Portal &amp; claims status</div>
+        </div>
+      </div>
+      <div class="agent-tools">
+        <span class="agent-tool-tag">claim_status</span>
+        <span class="agent-tool-tag">portal</span>
+        <span class="agent-tool-tag">uploads</span>
+      </div>
+    </div>
+
+    <!-- Escalation flow -->
+    <div class="escalation-flow" id="escalationFlow">
+      <div class="flow-title">Conversation Flow</div>
+      <div class="flow-step current" id="flow-step-0">
+        <div class="flow-dot"></div>
+        <span>Customer connected</span>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" id="flow-step-1">
+        <div class="flow-dot"></div>
+        <span>Triage classification</span>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" id="flow-step-2">
+        <div class="flow-dot"></div>
+        <span>Specialist handling</span>
+      </div>
+      <div class="flow-line"></div>
+      <div class="flow-step" id="flow-step-3">
+        <div class="flow-dot"></div>
+        <span>Resolution</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: CHAT -->
+  <main class="chat-panel">
+    <div class="chat-messages" id="chatMessages">
+      <!-- Welcome message -->
+      <div class="system-message">
+        &#x1F512; NemoClaw sandbox active &mdash; all agent actions are kernel-enforced
+      </div>
+
+      <div class="message assistant">
+        <div class="message-avatar" style="background: var(--accent);">&#x1F3AF;</div>
+        <div class="message-body">
+          <div class="message-sender">Triage Agent</div>
+          <div class="message-content">
+            Welcome to Meridian Insurance support. I'm here to help with your policy, billing, claims, or compliance questions. How can I assist you today?
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." autocomplete="off">
+        <button class="chat-send" id="chatSend" title="Send">&#x27A4;</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT: LOGS -->
+  <aside class="logs-panel">
+    <div class="logs-header">
+      <div class="logs-title">Live Logs</div>
+      <div class="logs-tabs">
+        <button class="logs-tab active" data-tab="all">All</button>
+        <button class="logs-tab" data-tab="security">Security</button>
+        <button class="logs-tab" data-tab="tools">Tools</button>
+      </div>
+    </div>
+
+    <div class="logs-content" id="logsContent">
+      <div class="log-entry" data-category="info">
+        <span class="log-time">00:00:00</span>
+        <span class="log-level-info"> INFO</span>
+        <span class="log-message"> NemoClaw sandbox initialized</span>
+      </div>
+      <div class="log-entry" data-category="policy">
+        <span class="log-time">00:00:00</span>
+        <span class="log-level-policy"> POLICY</span>
+        <span class="log-message"> sandbox-triage.yaml applied</span>
+      </div>
+      <div class="log-entry" data-category="info">
+        <span class="log-time">00:00:01</span>
+        <span class="log-level-info"> INFO</span>
+        <span class="log-message"> Triage agent loaded</span>
+      </div>
+      <div class="log-entry" data-category="info">
+        <span class="log-time">00:00:01</span>
+        <span class="log-level-info"> INFO</span>
+        <span class="log-message"> Inference endpoint: integrate.api.nvidia.com</span>
+      </div>
+      <div class="log-entry" data-category="policy">
+        <span class="log-time">00:00:01</span>
+        <span class="log-level-policy"> POLICY</span>
+        <span class="log-message"> Network policies active:</span>
+        <div class="log-detail">ALLOW integrate.api.nvidia.com (openclaw)</div>
+        <div class="log-detail">DENY * (all other endpoints)</div>
+      </div>
+    </div>
+
+    <div class="sandbox-status">
+      <div class="sandbox-label">Sandbox Policy: sandbox-triage.yaml</div>
+      <div class="sandbox-policy">
+        <div class="sandbox-dot allowed"></div>
+        integrate.api.nvidia.com
+      </div>
+      <div class="sandbox-policy">
+        <div class="sandbox-dot denied"></div>
+        billing.meridian-demo.internal
+      </div>
+      <div class="sandbox-policy">
+        <div class="sandbox-dot denied"></div>
+        docs.meridian-demo.internal
+      </div>
+      <div class="sandbox-policy">
+        <div class="sandbox-dot denied"></div>
+        * (all other)
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// === State ===
+const state = {
+  sessionId: null,
+  currentAgent: 'triage',
+  messages: [],
+  logs: [],
+  isProcessing: false,
+  apiBase: 'http://localhost:3000',
+  apiConnected: null,  // null = unknown, true/false after first probe
+  escalated: false,    // has this conversation been handed off to a specialist?
+  logFilter: 'all',
+};
+
+const agentMeta = {
+  triage:     { name: 'Triage Agent',      emoji: '\u{1F3AF}', color: '#3b82f6', policy: 'sandbox-triage.yaml' },
+  billing:    { name: 'Billing Specialist', emoji: '\u{1F4B3}', color: '#22c55e', policy: 'sandbox-billing.yaml' },
+  compliance: { name: 'Compliance',         emoji: '\u{1F4DC}', color: '#f59e0b', policy: 'sandbox-compliance.yaml' },
+  technical:  { name: 'Technical Support',  emoji: '\u{1F527}', color: '#8b5cf6', policy: 'sandbox-technical.yaml' },
+};
+
+const policyEndpoints = {
+  'sandbox-triage.yaml': [
+    { endpoint: 'integrate.api.nvidia.com', allowed: true },
+    { endpoint: 'billing.meridian-demo.internal', allowed: false },
+    { endpoint: 'docs.meridian-demo.internal', allowed: false },
+    { endpoint: '* (all other)', allowed: false },
+  ],
+  'sandbox-billing.yaml': [
+    { endpoint: 'integrate.api.nvidia.com', allowed: true },
+    { endpoint: 'billing.meridian-demo.internal', allowed: true },
+    { endpoint: 'docs.meridian-demo.internal', allowed: false },
+    { endpoint: '* (all other)', allowed: false },
+  ],
+  'sandbox-compliance.yaml': [
+    { endpoint: 'integrate.api.nvidia.com', allowed: true },
+    { endpoint: 'billing.meridian-demo.internal', allowed: false },
+    { endpoint: 'docs.meridian-demo.internal', allowed: true },
+    { endpoint: '* (all other)', allowed: false },
+  ],
+  'sandbox-technical.yaml': [
+    { endpoint: 'integrate.api.nvidia.com', allowed: true },
+    { endpoint: 'claims.meridian-demo.internal', allowed: true },
+    { endpoint: 'portal.meridian-demo.internal', allowed: true },
+    { endpoint: '* (all other)', allowed: false },
+  ],
+};
+
+// === DOM refs ===
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+const logsContent = document.getElementById('logsContent');
+
+// === Time helper ===
+function timestamp() {
+  const now = new Date();
+  return now.toTimeString().split(' ')[0];
+}
+
+// === Add log entry ===
+// The category is recorded on the parent <div>, and any detail lines render
+// inside that same element — so tab-based filtering shows/hides the whole
+// group as one unit.
+function addLog(level, message, detail) {
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.dataset.category = level;
+  entry.innerHTML = `<span class="log-time">${timestamp()}</span> <span class="log-level-${level}"> ${level.toUpperCase()}</span> <span class="log-message"> ${escapeHtml(message)}</span>`;
+  if (detail) {
+    const d = document.createElement('div');
+    d.className = 'log-detail';
+    d.textContent = detail;
+    entry.appendChild(d);
+  }
+  applyLogFilter(entry);
+  logsContent.appendChild(entry);
+  logsContent.scrollTop = logsContent.scrollHeight;
+}
+
+function applyLogFilter(entry) {
+  const cat = entry.dataset.category;
+  let show = true;
+  if (state.logFilter === 'security') show = cat === 'security';
+  else if (state.logFilter === 'tools') show = cat === 'tool';
+  entry.classList.toggle('filtered-out', !show);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+// === Add chat message ===
+function addMessage(role, content, agent) {
+  const meta = agent ? agentMeta[agent] : null;
+  const div = document.createElement('div');
+
+  if (role === 'system') {
+    div.className = 'system-message';
+    div.innerHTML = content;
+  } else {
+    div.className = `message ${role}`;
+    if (role === 'user') {
+      div.innerHTML = `
+        <div class="message-avatar" style="background: var(--navy-mid);">\u{1F464}</div>
+        <div class="message-body">
+          <div class="message-sender">Customer</div>
+          <div class="message-content">${content}</div>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="message-avatar" style="background: ${meta?.color || 'var(--accent)'};">${meta?.emoji || '\u{1F916}'}</div>
+        <div class="message-body">
+          <div class="message-sender">${meta?.name || 'Agent'}</div>
+          <div class="message-content">${content}</div>
+        </div>`;
+    }
+  }
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// === Add action card ===
+// `result` accepts { type: 'success'|'blocked'|'dryrun'|'error', message: string }.
+// `toolResult` (optional) is the raw JSON returned from a tool call — rendered
+// inline beneath args so the demo shows the full round-trip.
+function addActionCard(type, label, detail, result, toolResult) {
+  const div = document.createElement('div');
+  div.className = 'action-card';
+
+  const icons = { tool: '\u{2699}', escalation: '\u{2934}', security: '\u{1F6E1}', policy: '\u{2705}' };
+  const icon = icons[type] || '\u{2705}';
+
+  let resultHtml = '';
+  if (result) {
+    const allowed = ['success', 'blocked', 'dryrun', 'error'];
+    const cls = allowed.includes(result.type) ? result.type : 'success';
+    resultHtml = `<div class="action-result ${cls}">${escapeHtml(result.message)}</div>`;
+  }
+
+  let toolResultHtml = '';
+  if (toolResult !== undefined) {
+    const pretty = typeof toolResult === 'string'
+      ? toolResult
+      : JSON.stringify(toolResult, null, 2);
+    const trimmed = pretty.length > 600 ? pretty.slice(0, 600) + '…' : pretty;
+    toolResultHtml = `<div class="action-tool-result">${escapeHtml(trimmed)}</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="action-card-header">
+      <div class="action-icon ${type}">${icon}</div>
+      <div class="action-label">${escapeHtml(label)}</div>
+    </div>
+    ${detail ? `<div class="action-detail">${escapeHtml(detail)}</div>` : ''}
+    ${toolResultHtml}
+    ${resultHtml}`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// === Switch active agent ===
+function switchAgent(newAgent) {
+  // Update state
+  state.currentAgent = newAgent;
+
+  // Update agent cards
+  document.querySelectorAll('.agent-card').forEach(card => {
+    card.classList.remove('active');
+    card.querySelector('.agent-status-indicator').className = 'agent-status-indicator idle';
+    card.querySelector('.agent-status-indicator').textContent = 'Standby';
+  });
+  const activeCard = document.getElementById(`agent-${newAgent}`);
+  if (activeCard) {
+    activeCard.classList.add('active');
+    activeCard.querySelector('.agent-status-indicator').className = 'agent-status-indicator active';
+    activeCard.querySelector('.agent-status-indicator').textContent = 'Active';
+  }
+
+  // Update sandbox policy display
+  const meta = agentMeta[newAgent];
+  const policyLabel = document.querySelector('.sandbox-label');
+  policyLabel.textContent = `Sandbox Policy: ${meta.policy}`;
+
+  const policyContainer = document.querySelector('.sandbox-status');
+  const endpoints = policyEndpoints[meta.policy] || [];
+  const policyHtml = endpoints.map(ep =>
+    `<div class="sandbox-policy"><div class="sandbox-dot ${ep.allowed ? 'allowed' : 'denied'}"></div>${ep.endpoint}</div>`
+  ).join('');
+  policyContainer.innerHTML = `<div class="sandbox-label">Sandbox Policy: ${meta.policy}</div>${policyHtml}`;
+}
+
+// === Show typing indicator ===
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'message assistant';
+  div.id = 'typingIndicator';
+  const meta = agentMeta[state.currentAgent];
+  div.innerHTML = `
+    <div class="message-avatar" style="background: ${meta.color};">${meta.emoji}</div>
+    <div class="message-body">
+      <div class="message-sender">${meta.name}</div>
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+// === Escalation flow tracker ===
+// Steps: 0=connected, 1=triage classification, 2=specialist handling, 3=resolution
+function advanceFlow(step) {
+  for (let i = 0; i <= 3; i++) {
+    const el = document.getElementById(`flow-step-${i}`);
+    if (!el) continue;
+    el.classList.remove('current', 'done');
+    if (i < step) el.classList.add('done');
+    else if (i === step) el.classList.add('current');
+  }
+}
+
+// === Connection badge ===
+function updateConnectionBadge(status) {
+  const dot = document.getElementById('connDot');
+  const text = document.getElementById('connText');
+  if (!dot || !text) return;
+  dot.classList.remove('green', 'orange', 'red');
+  if (status === 'connected') {
+    dot.classList.add('green');
+    text.textContent = 'Connected';
+  } else if (status === 'offline') {
+    dot.classList.add('red');
+    text.textContent = 'Offline (simulated)';
+  } else {
+    dot.classList.add('orange');
+    text.textContent = 'Connecting…';
+  }
+}
+
+async function checkHealth() {
+  try {
+    const res = await fetch(`${state.apiBase}/health`, { method: 'GET' });
+    if (res.ok) {
+      state.apiConnected = true;
+      updateConnectionBadge('connected');
+      const body = await res.json().catch(() => ({}));
+      if (body.model) addLog('info', `Model: ${body.model}`);
+      if (body.nemoclawEnabled !== undefined) {
+        addLog('info', `NemoClaw enabled: ${body.nemoclawEnabled}`);
+      }
+    } else {
+      state.apiConnected = false;
+      updateConnectionBadge('offline');
+    }
+  } catch {
+    state.apiConnected = false;
+    updateConnectionBadge('offline');
+  }
+}
+
+// === Render policy switch card ===
+function renderPolicySwitch(ps) {
+  const target = ps.role;
+  const meta = agentMeta[target];
+  const fileName = ps.policyFile ? ps.policyFile.split('/').pop() : meta?.policy;
+  let result;
+  if (ps.dryRun) {
+    result = {
+      type: 'dryrun',
+      message: `Dry-run: would apply ${fileName} (NEMOCLAW_ENABLED=false)`,
+    };
+    addLog('policy', `Dry-run: ${fileName}`, ps.policyFile);
+  } else if (ps.applied) {
+    result = {
+      type: 'success',
+      message: `Policy applied: ${fileName}`,
+    };
+    addLog('policy', `Applied: ${fileName}`, ps.policyFile);
+  } else {
+    result = {
+      type: 'error',
+      message: `Policy switch failed: ${ps.detail || 'unknown error'}`,
+    };
+    addLog('security', `Policy switch FAILED: ${fileName}`, ps.detail);
+  }
+  addActionCard('policy', `Sandbox policy: ${meta?.name || target}`, fileName, result);
+}
+
+// === Send message ===
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || state.isProcessing) return;
+
+  state.isProcessing = true;
+  chatInput.value = '';
+  chatSend.disabled = true;
+
+  addMessage('user', text);
+  addLog('info', `Customer: "${text.substring(0, 80)}${text.length > 80 ? '…' : ''}"`);
+  advanceFlow(1);
+
+  showTyping();
+
+  let data = null;
+  let netError = null;
+  let httpError = null;
+
+  try {
+    const res = await fetch(`${state.apiBase}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId, message: text }),
+    });
+    if (!res.ok) {
+      httpError = { status: res.status, body: await res.text().catch(() => '') };
+    } else {
+      data = await res.json();
+      if (state.apiConnected !== true) {
+        state.apiConnected = true;
+        updateConnectionBadge('connected');
+      }
+    }
+  } catch (err) {
+    netError = err;
+  }
+
+  hideTyping();
+
+  if (netError) {
+    // Genuine network failure — fall back to offline simulation.
+    state.apiConnected = false;
+    updateConnectionBadge('offline');
+    addLog('info', 'Backend unreachable — entering offline simulation mode');
+    simulateResponse(text);
+    state.isProcessing = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+    return;
+  }
+
+  if (httpError) {
+    // Server responded with an error — surface it, do NOT simulate.
+    addActionCard('security',
+      `Server error: HTTP ${httpError.status}`,
+      httpError.body ? httpError.body.substring(0, 200) : '',
+      { type: 'error', message: 'Request failed' }
+    );
+    addLog('security', `HTTP ${httpError.status}`, httpError.body);
+    state.isProcessing = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+    return;
+  }
+
+  // Happy path — render the enriched payload.
+  state.sessionId = data.sessionId;
+
+  if (Array.isArray(data.toolCalls)) {
+    for (const tc of data.toolCalls) {
+      addActionCard(
+        'tool',
+        `Tool: ${tc.name}`,
+        `args: ${JSON.stringify(tc.args)}`,
+        null,
+        tc.result
+      );
+      addLog('tool', `${tc.name}()`, JSON.stringify(tc.args));
+    }
+  }
+
+  if (data.escalation) {
+    const target = data.escalation.targetAgent;
+    addActionCard('escalation',
+      `Escalating to ${agentMeta[target]?.name || target}`,
+      `Reason: ${data.escalation.context}`,
+      { type: 'success', message: `Handing off to ${agentMeta[target]?.name || target}` }
+    );
+    addLog('escalation', `Escalating to ${target}`, data.escalation.context);
+    addMessage('system', `\u{2934}\u{FE0F} Escalated to <strong>${agentMeta[target]?.name || target}</strong>`);
+    switchAgent(target);
+    state.escalated = true;
+  }
+
+  if (data.policySwitch) {
+    renderPolicySwitch(data.policySwitch);
+  }
+
+  if (data.securityEvent) {
+    addActionCard('security',
+      data.securityEvent.label,
+      data.securityEvent.detail,
+      { type: 'blocked', message: data.securityEvent.result }
+    );
+    addLog('security', data.securityEvent.label, data.securityEvent.detail);
+  }
+
+  if (data.response) {
+    const replyAgent = data.currentAgent || state.currentAgent;
+    addMessage('assistant', data.response, replyAgent);
+    addLog('info', `${agentMeta[replyAgent]?.name || replyAgent} responded`);
+  }
+
+  // Update the flow tracker to reflect the conversation state.
+  if (data.escalation) {
+    advanceFlow(2);
+  } else if (state.escalated) {
+    advanceFlow(3);
+  } else if (data.response) {
+    advanceFlow(3);
+  }
+
+  state.isProcessing = false;
+  chatSend.disabled = false;
+  chatInput.focus();
+}
+
+// === Offline simulation (when API not connected) ===
+function simulateResponse(text) {
+  const lower = text.toLowerCase();
+
+  // Detect escalation triggers
+  if (lower.includes('premium') || lower.includes('bill') || lower.includes('payment') || lower.includes('charge')) {
+    addActionCard('tool', 'Tool: get_customer_profile', '{ "customerId": "CUST-001" }');
+    addLog('tool', 'get_customer_profile()', 'customerId=CUST-001');
+
+    setTimeout(() => {
+      addActionCard('escalation',
+        'Escalating to Billing Specialist',
+        'Customer has a billing query about premium changes',
+        { type: 'success', message: 'Sandbox policy switched to sandbox-billing.yaml' }
+      );
+      addLog('escalation', 'Escalating to Billing Specialist', 'Premium/billing query detected');
+      addLog('policy', 'Policy hot-reload: sandbox-billing.yaml', 'billing.meridian-demo.internal now ALLOWED');
+      addMessage('system', '\u{2934}\u{FE0F} Escalated to <strong>Billing Specialist</strong>');
+      switchAgent('billing');
+
+      setTimeout(() => {
+        addActionCard('tool', 'Tool: lookup_billing_history', '{ "customerId": "CUST-001" }');
+        addLog('tool', 'lookup_billing_history()', 'customerId=CUST-001 \u2192 4 records');
+
+        setTimeout(() => {
+          addMessage('assistant',
+            'I can see your recent billing history, Sarah. Your premium increased from \u00A382.00 to \u00A389.50 per month in January 2025. This adjustment reflects updated risk assessments for your area (BS7 postcode) and an increase in rebuild cost indices. Would you like me to break down the specific factors?',
+            'billing'
+          );
+          addLog('info', 'Billing Specialist responded');
+        }, 800);
+      }, 600);
+    }, 500);
+    return;
+  }
+
+  if (lower.includes('data') || lower.includes('gdpr') || lower.includes('privacy') || lower.includes('share')) {
+    addActionCard('tool', 'Tool: get_customer_profile', '{ "customerId": "CUST-001" }');
+    addLog('tool', 'get_customer_profile()', 'customerId=CUST-001');
+
+    setTimeout(() => {
+      addActionCard('escalation',
+        'Escalating to Compliance',
+        'Customer has a data privacy / GDPR question',
+        { type: 'success', message: 'Sandbox policy switched to sandbox-compliance.yaml' }
+      );
+      addLog('escalation', 'Escalating to Compliance', 'Data privacy query detected');
+      addLog('policy', 'Policy hot-reload: sandbox-compliance.yaml', 'docs.meridian-demo.internal now ALLOWED');
+      addMessage('system', '\u{2934}\u{FE0F} Escalated to <strong>Compliance</strong>');
+      switchAgent('compliance');
+
+      setTimeout(() => {
+        addActionCard('tool', 'Tool: search_compliance_docs', '{ "query": "data sharing third party" }');
+        addLog('tool', 'search_compliance_docs()', 'query="data sharing" \u2192 3 results');
+
+        setTimeout(() => {
+          addMessage('assistant',
+            'According to our Third-Party Data Sharing Policy (DPP-003, v2.1), we share data with reinsurers, claims handlers, fraud prevention services, and regulatory bodies. Importantly, data shared with reinsurers is pseudonymised \u2014 your name and contact details are not shared, only policy reference numbers. You have the right to object to data sharing for marketing purposes at any time. Would you like more detail on any specific category?',
+            'compliance'
+          );
+          addLog('info', 'Compliance responded with policy citations');
+        }, 800);
+      }, 600);
+    }, 500);
+    return;
+  }
+
+  // Prompt injection simulation
+  if (lower.includes('system override') || lower.includes('ignore') || lower.includes('reveal') || lower.includes('other customer')) {
+    addLog('security', 'Potential prompt injection detected', text);
+    addActionCard('security',
+      'Prompt Injection Attempt Detected',
+      text,
+      { type: 'blocked', message: 'NemoClaw sandbox: Network exfiltration blocked. Agent confined to authorized endpoints only.' }
+    );
+    addLog('security', 'L7 Proxy: DENIED', 'binary=/usr/local/bin/openclaw destination=webhook.site reason=not in policy');
+
+    setTimeout(() => {
+      addMessage('assistant',
+        'I\'m not able to help with that request. I can only assist with your own policy, billing, and claims queries. Is there something else I can help you with regarding your Meridian Insurance policy?',
+        state.currentAgent
+      );
+    }, 600);
+    return;
+  }
+
+  // Default FAQ response
+  addActionCard('tool', 'Tool: search_knowledge_base', `{ "query": "${text.substring(0, 40)}" }`);
+  addLog('tool', 'search_knowledge_base()', `query="${text.substring(0, 40)}"`);
+
+  setTimeout(() => {
+    addMessage('assistant',
+      'I\'d be happy to help with that. Could you provide your policy number so I can look up your specific details? In the meantime, you can find general information about our policies on your customer portal.',
+      'triage'
+    );
+    addLog('info', 'Triage Agent responded');
+  }, 600);
+}
+
+// === Event listeners ===
+chatSend.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+// Logs tab filtering — toggles a class on each entry based on data-category.
+document.querySelectorAll('.logs-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.logs-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.logFilter = tab.dataset.tab || 'all';
+    document.querySelectorAll('#logsContent .log-entry').forEach(applyLogFilter);
+  });
+});
+
+// Focus input on load
+chatInput.focus();
+
+// Probe backend connectivity so the UI surfaces live/offline state up front.
+checkHealth();
+</script>
+</body>
+</html>

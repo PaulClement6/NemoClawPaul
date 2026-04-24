@@ -1,0 +1,31 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Claims Analyst Agent
+# Lot 2 — Claims analyst. Prediction model access only.
+# =============================================================================
+# This policy will be activated when the Lot 2 claims model is deployed.
+# The agent can only POST prediction requests to the claims model endpoint.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
+
+  - name: claims-model
+    endpoint: claims-model.meridian-demo.internal
+    protocol: https
+    access: restricted
+    binaries:
+      - openclaw
+    rules:
+      - allow: POST
+        paths:
+          - /api/v1/claims/predict
+        description: "Submit prediction requests to the claims severity model"

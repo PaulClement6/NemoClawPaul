@@ -1,0 +1,31 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Compliance Specialist Agent
+# =============================================================================
+# Access to inference API plus the internal compliance docs service.
+# Read-only access — GET requests only on compliance paths.
+# Only the openclaw binary may access the docs endpoint.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
+
+  - name: compliance-docs
+    endpoint: docs.meridian-demo.internal
+    protocol: https
+    access: read-only
+    binaries:
+      - openclaw
+    rules:
+      - allow: GET
+        paths:
+          - /api/v1/compliance/*
+        description: "Read-only access to compliance documentation"

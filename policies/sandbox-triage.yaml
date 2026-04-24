@@ -1,0 +1,20 @@
+# =============================================================================
+# NemoClaw Sandbox Policy: Triage Agent
+# =============================================================================
+# This is the MOST RESTRICTIVE policy in the system.
+# The triage agent only has access to the inference endpoint.
+# It cannot reach any internal Meridian services — its sole purpose is to
+# classify the customer's intent and route to a specialist agent.
+# =============================================================================
+
+network_policies:
+  - name: nvidia-inference
+    endpoint: integrate.api.nvidia.com
+    protocol: openai-responses
+    access: full
+    binaries:
+      - openclaw
+      - node
+    rules:
+      - allow: "*"
+        description: "Full access to NVIDIA NIM inference API"
