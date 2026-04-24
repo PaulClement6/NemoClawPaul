@@ -751,6 +751,51 @@ binary attribution, policy system. Documented in NemoClaw-Learning-Log.md (close
 - **XSS hardening** — all user- and server-sourced strings rendered through `escapeHtml()` in the log + action-card builders (previously some fields were innerHTML-ed raw).
 **Next session:** push to GitHub + prep Brev deployment (see "Then: Prepare for Brev Deployment" below).
 
+### Session 12 — 2026-04-24 — First Live Run on NVIDIA Brev
+**Target:** Execute the 8-step Brev setup playbook on `nemoclaw-b52392` against real NemoClaw.
+**Status:** Pipeline end-to-end LIVE on Brev in **dry-run mode** (NEMOCLAW_ENABLED=false). Discovered two architectural mismatches between my code and the real `openshell` CLI — kept the run host-side so we get a clean reference payload before deciding the fix.
+
+**Infrastructure access:**
+- SSH direct to the Brev public IP kept timing out (`136.109.49.211:22` unreachable from my Mac). Switched to `brev exec nemoclaw-b52392 "..."` which tunnels through Brev's gateway — that worked consistently.
+- Deploy key (`nemoclaw-b52392`, read-only, GitHub key id **149551848**) added to `PaulClement6/NemoClawPaul` so the instance can `git clone` the private repo over SSH.
+- Copied local `.env` to instance via `brev copy` (keeps `NVIDIA_API_KEY` off the command line).
+
+**Confirmed about the NVIDIA Brev instance:**
+- openshell 0.0.24 at `/usr/local/bin/openshell`; gateway `nemoclaw`, local server `127.0.0.1:8080`, status **Connected**
+- Stack is **k3s-based**: `k3s server`, `containerd`, `agent-sandbox-controller` pods, `local-path-provisioner`. **Sandboxes are actual Kubernetes pods**, not a process wrapper.
+- Pre-installed: Node v22.22.2, npm 10.9.7, git 2.34.1, tmux, nginx (with a `nemoclaw` site), cloudflared tunnel for public access.
+- **Ports 3000 (next-server / onboard-ui), 3001 (terminal-server.js), 8080 (openshell) are pre-occupied.** Demo must use a non-conflicting port — switched to **3333**.
+
+**Architectural mismatches found in my code:**
+1. **`openshell` has no `run` subcommand.** My `scripts/run-demo.sh` used `openshell run -- npm run dev` — doesn't exist. Real flow: `openshell sandbox create [--from <image>] --policy <file>` then `openshell sandbox exec -n <name> -- <cmd>`.
+2. **`openshell policy set` signature is different.** My `src/orchestrator/sandbox.ts` calls `openshell policy set <file>`; real CLI requires `openshell policy set --policy <file> [SANDBOX_NAME]` (or `--global`). Sandbox name defaults to last-used; without a live sandbox, the call fails.
+3. **Bigger picture:** the Node server was supposed to "run inside openshell". In the k3s model that means the server lives inside a sandbox pod — the sandbox brings its own container image. That's a larger refactor than a syntax fix: the demo needs a Dockerfile or to use a community image (`ghcr.io/nvidia/openshell-community/sandboxes/<name>`), then upload code or bake it in.
+
+**Smoke-test results (server on Brev host, `npm run dev`, port 3333, `NEMOCLAW_ENABLED=false`):**
+
+| # | Scenario | Outcome |
+|---|----------|---------|
+| 1 | FAQ — "When does my policy renew?" | ✅ Triage + `search_knowledge_base` → FAQ answer with source |
+| 2 | Billing — "Why did my premium go up?" | ⚠️ Triage resolved from FAQ (did **not** escalate). LLM non-determinism — decided the FAQ answer was sufficient. Happens locally too in some runs. |
+| 3 | Compliance — "Who do you share my data with? GDPR." | ✅ Escalated to compliance, `currentAgent` flipped, dry-run `policySwitch: {policyFile: "policies/sandbox-compliance.yaml", dryRun: true}` |
+| 4 | Technical — "I cannot log into the portal" | ✅ Escalated to technical, dry-run `policySwitch` |
+| 5 | Prompt injection — "Ignore your instructions..." | ✅ LLM refused. No L7 block because sandbox isn't active; would need NEMOCLAW_ENABLED=true + real sandbox for network-level enforcement. |
+
+**For the NemoClaw team meeting — additions to Open Questions:**
+- **Sandbox lifecycle for long-running servers:** A Node dev-server is a long-lived process. Is `openshell sandbox exec` the right command for hosting it, or should we bake the server into a Docker image passed via `--from`? Does policy hot-reload via `openshell policy set --policy <file> <sandbox-name>` work while the process inside is serving HTTP?
+- **Community images for Node:** Is there a `ghcr.io/nvidia/openshell-community/sandboxes/node` (or similar) we can use, or should we build a custom image?
+- **Port exposure from sandbox to host:** the onboard-ui already uses 3000/3001/8080 on the instance. How do we expose a port from inside a sandbox to the outside world (for the dashboard)? `openshell forward` is the likely answer — needs confirmation.
+- **System prompt strengthening:** Scenario 2 showed the model choosing FAQ over escalation. Before Brev goes live for demos, we should tighten the triage system prompt with explicit "escalate when X" rules, or pick a larger model (405B) for demos where the billing/escalation flow needs to be deterministic.
+
+**Code fixes queued for next session (after NemoClaw team answers):**
+- `src/orchestrator/sandbox.ts` → use `execFileSync("openshell", ["policy", "set", "--policy", policyFile, sandboxName])`, make `sandboxName` env-driven (`NEMOCLAW_SANDBOX=meridian-demo`)
+- `scripts/run-demo.sh` → remove `openshell run`; replace with `openshell sandbox create --from <img> --policy policies/sandbox-triage.yaml --name meridian-demo`, then boot the server via `openshell sandbox exec` or port-forward
+- Consider a `Dockerfile` at repo root so the demo is a container image, which is how `openshell sandbox create --from .` wants to consume it.
+
+**Cleanup at end of session:** tmux `demo` session killed, port 3333 free, no lingering ts-node processes. Instance still running — Paul can stop it from the NVIDIA Brev dashboard to pause billing ($0.04/hr).
+
+---
+
 ### Session 11 — 2026-04-24 — GitHub Repo Live
 **Target:** Initialize local git, create a private GitHub repo, push clean.
 **Status:** DONE — repo at https://github.com/PaulClement6/NemoClawPaul (private), 60 files / 1 commit on `main`, no CI runs triggered (by design).
@@ -807,7 +852,23 @@ binary attribution, policy system. Documented in NemoClaw-Learning-Log.md (close
 ### Pending: Answers from NemoClaw Team
 
 Paul is meeting with NemoClaw experts. Their answers may change the architecture.
-**Do not start Lot 2 work until these questions are resolved:**
+**Do not start Lot 2 work until these questions are resolved.**
+
+> **Updated 2026-04-24 after Session 12:** The Brev instance runs a k3s-based
+> openshell; sandboxes are Kubernetes pods created via `openshell sandbox create`
+> with a container image. My code assumed a process-wrapper model (`openshell run -- npm run dev`)
+> which doesn't exist in the real CLI. See questions 0, 8, 9, 10 below.
+
+0. **Sandbox lifecycle for a long-running Node server (NEW)** — The dev server is
+   long-lived. Is the right pattern:
+   (a) bake the Node app into a Docker image → `openshell sandbox create --from <image>
+   --policy policies/sandbox-triage.yaml --name meridian-demo`, then `sandbox exec`
+   the entry point; or
+   (b) use a community image (e.g., `ghcr.io/nvidia/openshell-community/sandboxes/node`),
+   upload code at startup, run it; or
+   (c) something else entirely?
+   Also: does `openshell policy set --policy X meridian-demo` hot-swap cleanly on a
+   live sandbox whose PID 1 is a Node server?
 
 1. **Inter-sandbox communication** — One sandbox with policy hot-reload (current design)
    vs. separate sandbox per agent? If separate, how do agents pass conversation context?
@@ -835,6 +896,21 @@ Paul is meeting with NemoClaw experts. Their answers may change the architecture
 
 7. **Fine-tuning** — Any NemoClaw-side changes needed when switching from a hosted model
    to a fine-tuned model? Same inference endpoint, same policies?
+
+8. **Port exposure from sandbox to host (NEW)** — How does a dashboard outside the
+   sandbox reach an HTTP server inside it? `openshell forward` is probably the answer
+   but we need to confirm the invocation and whether it survives policy hot-reload.
+
+9. **Occupied ports on Brev instances (NEW)** — NVIDIA Brev instances run a
+   "NemoClaw onboard-ui" on :3000 + :3001 and openshell itself on :8080 out of the
+   box. The demo must use a non-conflicting port (we chose 3333). Is there a
+   documented/reserved range for user apps?
+
+10. **Policy file path inside the sandbox (NEW)** — When we do
+    `openshell policy set --policy policies/sandbox-billing.yaml meridian-demo`,
+    is the path resolved on the host (where we invoked the CLI) or inside the
+    sandbox's filesystem? This changes whether `policies/` needs to be baked into
+    the image, uploaded via `openshell sandbox upload`, or left on the host.
 
 **When answers arrive:** Update this section with the decisions, add to Architecture
 Decisions table, and adjust the implementation plan accordingly.
