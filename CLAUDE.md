@@ -665,6 +665,22 @@ binary attribution, policy system. Documented in NemoClaw-Learning-Log.md (close
 - **XSS hardening** — all user- and server-sourced strings rendered through `escapeHtml()` in the log + action-card builders (previously some fields were innerHTML-ed raw).
 **Next session:** push to GitHub + prep Brev deployment (see "Then: Prepare for Brev Deployment" below).
 
+### Session 11 — 2026-04-24 — GitHub Repo Live
+**Target:** Initialize local git, create a private GitHub repo, push clean.
+**Status:** DONE — repo at https://github.com/PaulClement6/NemoClawPaul (private), 60 files / 1 commit on `main`, no CI runs triggered (by design).
+- Added `.eslintrc.json` so `npm run lint` actually has a config (the CI workflow invokes it — would have failed on the first PR).
+- Disabled the `push: [main]` trigger on `.github/workflows/deploy-brev.yml` → swapped to `workflow_dispatch`. Will flip back once `BREV_SSH_KEY` + `BREV_HOST` secrets are set.
+- Pre-commit gate: `lint + typecheck + test` all green.
+- `git init -b main`, initial commit authored as Paul.
+- `.gitignore` already excluded `.env`, `node_modules`, `dist`, `*.joblib`, `*.pkl` — verified `.env` is not in the commit.
+- `gh repo create PaulClement6/NemoClawPaul --private`, `git push -u origin main`.
+**Next session (Brev phase):**
+1. User supplies Brev instance details (host + SSH approach).
+2. Generate key pair, install NemoClaw on Brev, `setup-brev.sh` → `run-demo.sh`.
+3. `gh secret set BREV_SSH_KEY` + `gh secret set BREV_HOST`.
+4. Flip `deploy-brev.yml` trigger back to `push: [main]`.
+5. Run all 5 Lot-1 scenarios end-to-end with real sandbox enforcement.
+
 ---
 
 ## Next Steps — What Claude Code Should Do Next
@@ -681,12 +697,13 @@ See Session 10 in the Progress Log for the full breakdown.
 
 ### Then: Prepare for Brev Deployment
 
-1. **Push to GitHub** — create a repo, push the codebase
+1. **Push to GitHub** — ✅ DONE 2026-04-24 (private repo: https://github.com/PaulClement6/NemoClawPaul)
 2. **Create Brev instance** — see "Development Environment > Mode 2" section above
 3. **Install NemoClaw** — check official docs for install command
 4. **Clone, setup, run** — `setup-brev.sh` then `run-demo.sh`
-5. **Test all 5 Lot 1 scenarios** end-to-end with real sandbox enforcement
-6. **Capture screenshots/recording** of the dashboard during a live demo flow
+5. **Wire GitHub secrets** — `gh secret set BREV_SSH_KEY`, `gh secret set BREV_HOST`; re-enable the `push: [main]` trigger on `deploy-brev.yml`
+6. **Test all 5 Lot 1 scenarios** end-to-end with real sandbox enforcement
+7. **Capture screenshots/recording** of the dashboard during a live demo flow
 
 ### Future: Lot 2 & 3
 
