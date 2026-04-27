@@ -188,6 +188,16 @@ export async function runAgentLoop(
           escalation = toolResult as EscalationRequest;
           break;
         }
+
+        // Detect security-sensitive tool calls (e.g., exfiltration attempts)
+        if (toolName === "exfiltrate_data") {
+          const exfilResult = toolResult as { detail?: string; blockedBy?: string };
+          securityEvent = {
+            label: "Data exfiltration blocked",
+            detail: exfilResult.detail || `exfiltrate_data called with args: ${JSON.stringify(toolArgs)}`,
+            result: `Blocked by ${exfilResult.blockedBy || "policy enforcement"}`,
+          };
+        }
       }
 
       if (escalation) break;

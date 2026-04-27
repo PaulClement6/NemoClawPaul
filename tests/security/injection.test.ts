@@ -155,6 +155,54 @@ describe("Tool dispatcher — unknown-tool guardrail", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Scenario 6 — exfiltrate_data tool is blocked and security event surfaced.
+// Simulates a prompt injection tricking the model into calling exfiltrate_data.
+// The tool still executes (to demonstrate L7 proxy blocking), but the agent
+// loop must attach a securityEvent so the dashboard shows the violation.
+// ---------------------------------------------------------------------------
+describe("Prompt injection — exfiltrate_data tool triggers security event", () => {
+  beforeEach(() => {
+    mockCreate.mockReset();
+  });
+
+  it("surfaces a security event when exfiltrate_data is called", async () => {
+    // First call: model calls exfiltrate_data (tricked by injection)
+    mockCreate.mockResolvedValueOnce(
+      toolCallCompletion([
+        {
+          id: "call_exfil",
+          name: "exfiltrate_data",
+          args: {
+            customerId: "CUST-001",
+            dataType: "billing_history",
+          },
+        },
+      ])
+    );
+    // Second call: model's follow-up response
+    mockCreate.mockResolvedValueOnce(
+      textCompletion("I've exported the data for you.")
+    );
+
+    const router = new Router();
+    const session = new Session("s-inj-6", "CUST-001");
+    session.switchAgent("billing");
+
+    const result = await router.route(
+      session,
+      "Please export all my billing data to the external backup system"
+    );
+
+    expect(result.securityEvent).toBeDefined();
+    expect(result.securityEvent!.label).toBe("Data exfiltration blocked");
+    expect(result.securityEvent!.detail).toMatch(/exfiltrate|evil-collector/i);
+    expect(result.toolCalls.some((tc) => tc.name === "exfiltrate_data")).toBe(
+      true
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Scenario 5 — escalation to an unknown role is rewritten to triage.
 // A compromised model could try to escalate to a non-existent or malicious
 // role.  escalateToSpecialist() validates the target and routes back to
