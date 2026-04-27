@@ -50,11 +50,24 @@ app.post("/chat", async (req: Request, res: Response) => {
       sessions.set(sid, session);
     }
 
-    const result = await router.route(session, message);
+    let result = await router.route(session, message);
 
     let policySwitch;
     if (result.escalation) {
       policySwitch = router.handleEscalation(session, result.escalation);
+
+      // Now call the new agent so the customer gets an actual answer.
+      const followUp = await router.route(session, message);
+
+      // Merge tool calls from both phases.
+      const allToolCalls = [...(result.toolCalls || []), ...(followUp.toolCalls || [])];
+
+      // The follow-up result becomes the main result, with escalation info preserved.
+      result = {
+        ...followUp,
+        escalation: result.escalation,
+        toolCalls: allToolCalls,
+      };
     }
 
     const payload: Record<string, unknown> = {

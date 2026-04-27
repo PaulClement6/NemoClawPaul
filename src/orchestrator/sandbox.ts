@@ -1,47 +1,81 @@
 import { execFileSync } from "child_process";
-import path from "path";
 import { AgentRole } from "../types";
+import { getAgentEndpoint } from "./agent-registry";
 
 export interface PolicySwitchEvent {
   role: AgentRole;
+  /** Sandbox name targeted (e.g. `agent-billing`). */
+  sandboxName: string;
+  /** Path of the policy YAML supplied to `openshell policy set`. */
   policyFile: string;
+  /** True when `openshell policy set ... --wait` returned 0. */
   applied: boolean;
+  /** True when `NEMOCLAW_ENABLED=false` (host has no openshell — local dev). */
   dryRun: boolean;
+  /** Error message captured if applied=false and dryRun=false. */
   detail?: string;
 }
 
 /**
- * Hot-reload the NemoClaw sandbox policy for a given agent role.
+ * Hot-reload the OpenShell network policy on an agent's sandbox pod.
  *
- * When `NEMOCLAW_ENABLED=true` (server running inside `openshell` on a
- * NemoClaw-enabled host), shells out to `openshell policy set <file>`.
+ * Real CLI shape (verified on Brev, openshell ≥ 0.0.24):
+ *   openshell policy set <SANDBOX_NAME> --policy <FILE> --wait
  *
- * When `NEMOCLAW_ENABLED=false` or unset (local dev), no process is
- * spawned — the intended command is logged and the caller receives a
- * dry-run event so the dashboard can still render the transition.
+ * `--wait` blocks until the gRPC poll loop on the sandbox confirms the new
+ * policy is loaded (default 60s timeout — typically 1–10s in practice).
+ *
+ * When `NEMOCLAW_ENABLED=false` (local laptop dev, no openshell installed),
+ * skip the shell-out and return a dry-run event so the dashboard can still
+ * render the transition card.
  */
 export function switchPolicy(role: AgentRole): PolicySwitchEvent {
-  const policyDir = process.env.NEMOCLAW_POLICY_DIR || "./policies";
-  const policyFile = path.join(policyDir, `sandbox-${role}.yaml`);
+  const endpoint = getAgentEndpoint(role);
+  const sandboxName = endpoint.sandboxName;
+  const policyFile = endpoint.policyFile;
   const enabled = process.env.NEMOCLAW_ENABLED === "true";
 
   if (!enabled) {
     console.log(
-      `[NemoClaw dry-run] openshell policy set ${policyFile} (NEMOCLAW_ENABLED=false)`
+      `[NemoClaw dry-run] openshell policy set ${sandboxName} --policy ${policyFile} --wait (NEMOCLAW_ENABLED=false)`
     );
-    return { role, policyFile, applied: false, dryRun: true };
+    return {
+      role,
+      sandboxName,
+      policyFile,
+      applied: false,
+      dryRun: true,
+    };
   }
 
   try {
-    execFileSync("openshell", ["policy", "set", policyFile], {
-      stdio: "pipe",
-      timeout: 5000,
-    });
-    console.log(`[NemoClaw] policy applied: ${policyFile}`);
-    return { role, policyFile, applied: true, dryRun: false };
+    execFileSync(
+      "openshell",
+      ["policy", "set", sandboxName, "--policy", policyFile, "--wait"],
+      { stdio: "pipe", timeout: 30000 }
+    );
+    console.log(
+      `[NemoClaw] policy applied: ${sandboxName} <- ${policyFile}`
+    );
+    return {
+      role,
+      sandboxName,
+      policyFile,
+      applied: true,
+      dryRun: false,
+    };
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : String(err);
-    console.error(`[NemoClaw] policy switch failed: ${detail}`);
-    return { role, policyFile, applied: false, dryRun: false, detail };
+    console.error(
+      `[NemoClaw] policy switch failed for ${sandboxName}: ${detail}`
+    );
+    return {
+      role,
+      sandboxName,
+      policyFile,
+      applied: false,
+      dryRun: false,
+      detail,
+    };
   }
 }
