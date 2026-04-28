@@ -26,6 +26,17 @@ if ! command -v openshell >/dev/null 2>&1; then
   exit 1
 fi
 
+if [ -z "${NVIDIA_API_KEY:-}" ] && [ -f .env ]; then
+  # Pull NVIDIA_API_KEY from local .env if not already in the shell.
+  NVIDIA_API_KEY=$(awk -F= '/^NVIDIA_API_KEY=/{print substr($0, length($1)+2); exit}' .env)
+fi
+if [ -z "${NVIDIA_API_KEY:-}" ]; then
+  echo "ERROR: NVIDIA_API_KEY is not set (and not in ./.env). Aborting." >&2
+  exit 1
+fi
+NVIDIA_MODEL=${NVIDIA_MODEL:-meta/llama-3.1-70b-instruct}
+NVIDIA_BASE_URL=${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+
 # role:sandbox:port pairs (claims_analyst -> agent-claims for shorter sandbox name)
 ENTRIES=(
   "triage:agent-triage:8081"
@@ -58,15 +69,20 @@ for entry in "${ENTRIES[@]}"; do
   fi
 
   echo "[$sandbox] creating (role=$role port=$port policy=$policy_file)..."
+  # openshell v0.0.24 has no `-e` flag; inject env vars via the launch
+  # command using `env VAR=val ... cmd`.
   openshell sandbox create \
     --name "$sandbox" \
     --from ./ \
     --policy "$policy_file" \
     --forward "$port" \
-    --keep \
-    -e "AGENT_ROLE=$role" \
-    -e "AGENT_PORT=3000" \
-    -- node /sandbox/app/dist/agent-server.js
+    -- env \
+      "AGENT_ROLE=$role" \
+      "AGENT_PORT=3000" \
+      "NVIDIA_API_KEY=$NVIDIA_API_KEY" \
+      "NVIDIA_MODEL=$NVIDIA_MODEL" \
+      "NVIDIA_BASE_URL=$NVIDIA_BASE_URL" \
+      node /sandbox/app/dist/agent-server.js
 done
 
 echo ""
