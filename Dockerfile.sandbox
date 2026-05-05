@@ -9,10 +9,14 @@
 # =============================================================================
 FROM ghcr.io/nvidia/nemoclaw/sandbox-base:latest
 
-# --- Setup workspace structure ---
+# --- Setup workspace structure (per-agent workspaces) ---
 USER root
-RUN mkdir -p /sandbox/.openclaw-data/workspace/meridian/demo-data/compliance-docs \
-    && mkdir -p /sandbox/.openclaw-data/workspace/meridian/policies \
+RUN mkdir -p /sandbox/.openclaw-data/workspace/triage/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/billing/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/compliance/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/technical/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/pricing/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/claims_analyst/demo-data/compliance-docs \
     && mkdir -p /sandbox/.openclaw-data/skills \
     && mkdir -p /sandbox/.openclaw-data/canvas \
     && mkdir -p /sandbox/.openclaw/logs
@@ -22,10 +26,24 @@ COPY openclaw.json /sandbox/.openclaw/openclaw.json
 RUN sha256sum /sandbox/.openclaw/openclaw.json > /sandbox/.openclaw/.config-hash \
     && chmod 444 /sandbox/.openclaw/openclaw.json
 
-# --- Copy workspace data ---
-COPY demo-data/ /sandbox/.openclaw-data/workspace/meridian/demo-data/
-COPY AGENTS.md /sandbox/.openclaw-data/workspace/meridian/AGENTS.md
-COPY SOUL.md /sandbox/.openclaw-data/workspace/meridian/SOUL.md
+# --- Copy per-agent AGENTS.md files ---
+COPY workspaces/triage/AGENTS.md /sandbox/.openclaw-data/workspace/triage/AGENTS.md
+COPY workspaces/billing/AGENTS.md /sandbox/.openclaw-data/workspace/billing/AGENTS.md
+COPY workspaces/compliance/AGENTS.md /sandbox/.openclaw-data/workspace/compliance/AGENTS.md
+COPY workspaces/technical/AGENTS.md /sandbox/.openclaw-data/workspace/technical/AGENTS.md
+COPY workspaces/pricing/AGENTS.md /sandbox/.openclaw-data/workspace/pricing/AGENTS.md
+COPY workspaces/claims_analyst/AGENTS.md /sandbox/.openclaw-data/workspace/claims_analyst/AGENTS.md
+
+# --- Copy demo data into EACH agent workspace (they need relative access) ---
+COPY demo-data/ /sandbox/.openclaw-data/workspace/triage/demo-data/
+COPY demo-data/ /sandbox/.openclaw-data/workspace/billing/demo-data/
+COPY demo-data/ /sandbox/.openclaw-data/workspace/compliance/demo-data/
+COPY demo-data/ /sandbox/.openclaw-data/workspace/technical/demo-data/
+COPY demo-data/ /sandbox/.openclaw-data/workspace/pricing/demo-data/
+COPY demo-data/ /sandbox/.openclaw-data/workspace/claims_analyst/demo-data/
+
+# --- Copy SOUL.md into triage workspace (main sessions get it) ---
+COPY SOUL.md /sandbox/.openclaw-data/workspace/triage/SOUL.md
 
 # --- Copy skills ---
 COPY skills/ /sandbox/.openclaw-data/skills/
