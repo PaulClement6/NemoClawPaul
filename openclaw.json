@@ -1,14 +1,40 @@
 {
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "inference": {
+        "baseUrl": "https://inference.local/v1",
+        "apiKey": "unused",
+        "api": "openai-responses",
+        "models": [
+          {
+            "id": "nvidia/nemotron-3-super-120b-a12b",
+            "name": "inference/nvidia/nemotron-3-super-120b-a12b",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 131072,
+            "maxTokens": 4096,
+            "api": "openai-responses"
+          }
+        ]
+      }
+    }
+  },
   "gateway": {
+    "mode": "local",
     "port": 18789,
     "bind": "loopback",
     "auth": {
-      "mode": "token",
       "token": "meridian-demo-2026"
     },
     "controlUi": {
-      "enabled": true
+      "enabled": true,
+      "allowedOrigins": ["http://127.0.0.1:18789"],
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true
     },
+    "trustedProxies": ["127.0.0.1", "::1"],
     "http": {
       "endpoints": {
         "chatCompletions": { "enabled": true },
@@ -18,18 +44,18 @@
   },
   "skills": {
     "load": {
-      "extraDirs": ["~/.openclaw/workspace/skills"]
+      "extraDirs": ["/sandbox/.openclaw-data/skills"]
     }
   },
   "canvasHost": {
-    "root": "~/.openclaw/workspace/canvas",
+    "root": "/sandbox/.openclaw-data/canvas",
     "liveReload": true
   },
   "agents": {
     "defaults": {
-      "workspace": "~/.openclaw/workspace/meridian",
+      "workspace": "/sandbox/.openclaw-data/workspace/meridian",
       "model": {
-        "primary": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+        "primary": "inference/nvidia/nemotron-3-super-120b-a12b",
         "fallbacks": []
       },
       "skills": [],
