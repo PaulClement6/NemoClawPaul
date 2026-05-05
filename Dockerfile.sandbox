@@ -33,6 +33,10 @@ COPY skills/ /sandbox/.openclaw-data/skills/
 # --- Copy dashboard ---
 COPY src/ui/dashboard-v2.html /sandbox/.openclaw-data/canvas/index.html
 
+# --- Create nemoclaw-start entrypoint (starts OpenClaw gateway) ---
+RUN printf '#!/bin/bash\nset -e\nexec openclaw gateway\n' > /usr/local/bin/nemoclaw-start \
+    && chmod 755 /usr/local/bin/nemoclaw-start
+
 # --- Fix ownership ---
 RUN chown -R root:root /sandbox/.openclaw \
     && chown -R sandbox:sandbox /sandbox/.openclaw-data
@@ -41,4 +45,5 @@ RUN chown -R root:root /sandbox/.openclaw \
 WORKDIR /sandbox
 USER sandbox
 
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/usr/local/bin/nemoclaw-start"]
+CMD ["/bin/bash"]
