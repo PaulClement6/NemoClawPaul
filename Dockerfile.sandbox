@@ -2,20 +2,25 @@
 # Dockerfile.sandbox — Custom NemoClaw sandbox with Meridian Insurance agents
 # =============================================================================
 #
-# Used with: nemoclaw onboard --from Dockerfile.sandbox --recreate-sandbox
+# Used with: nemoclaw onboard --from Dockerfile.sandbox
 #
-# This Dockerfile extends the NemoClaw sandbox base to include:
-# - Our multi-agent openclaw.json (6 specialist agents)
-# - Demo data (customers, billing, claims, compliance docs)
-# - AGENTS.md and SOUL.md (shared instructions)
-# - Skills (6 SKILL.md files)
-# - Dashboard (canvas/index.html)
-#
-# NemoClaw's build system will use this as the sandbox image source.
+# Starts FROM the NemoClaw sandbox base (which already has OpenClaw installed)
+# and adds our multi-agent config, demo data, skills, and dashboard.
 # =============================================================================
+FROM ghcr.io/nvidia/nemoclaw/sandbox-base:latest
 
-# --- Copy our custom openclaw.json (replaces the auto-generated one) ---
-COPY openclaw.json /tmp/meridian-config.json
+# --- Setup workspace structure ---
+USER root
+RUN mkdir -p /sandbox/.openclaw-data/workspace/meridian/demo-data/compliance-docs \
+    && mkdir -p /sandbox/.openclaw-data/workspace/meridian/policies \
+    && mkdir -p /sandbox/.openclaw-data/skills \
+    && mkdir -p /sandbox/.openclaw-data/canvas \
+    && mkdir -p /sandbox/.openclaw/logs
+
+# --- Copy our custom openclaw.json (multi-agent config) ---
+COPY openclaw.json /sandbox/.openclaw/openclaw.json
+RUN sha256sum /sandbox/.openclaw/openclaw.json > /sandbox/.openclaw/.config-hash \
+    && chmod 444 /sandbox/.openclaw/openclaw.json
 
 # --- Copy workspace data ---
 COPY demo-data/ /sandbox/.openclaw-data/workspace/meridian/demo-data/
@@ -28,17 +33,12 @@ COPY skills/ /sandbox/.openclaw-data/skills/
 # --- Copy dashboard ---
 COPY src/ui/dashboard-v2.html /sandbox/.openclaw-data/canvas/index.html
 
-# --- Inject our config (must happen as root, before lockdown) ---
-USER root
-RUN cp /tmp/meridian-config.json /sandbox/.openclaw/openclaw.json \
-    && sha256sum /sandbox/.openclaw/openclaw.json > /sandbox/.openclaw/.config-hash \
-    && chown root:root /sandbox/.openclaw/openclaw.json \
-    && chmod 444 /sandbox/.openclaw/openclaw.json \
-    && rm /tmp/meridian-config.json
+# --- Fix ownership ---
+RUN chown -R root:root /sandbox/.openclaw \
+    && chown -R sandbox:sandbox /sandbox/.openclaw-data
 
-# Fix ownership on data dirs (sandbox user needs write access)
-RUN chown -R sandbox:sandbox /sandbox/.openclaw-data/workspace/ \
-    /sandbox/.openclaw-data/skills/ \
-    /sandbox/.openclaw-data/canvas/
-
+# --- Runtime config ---
+WORKDIR /sandbox
 USER sandbox
+
+ENTRYPOINT ["/bin/bash"]
